@@ -22,7 +22,7 @@ public class NodeDAO extends ConnectionFactory{
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		ArrayList<Node> nodes = null;
-		connect = criarConexao();
+		connect = createConnection();
 		nodes = new ArrayList<Node>();
 		try{
 			pstmt = connect.prepareStatement("select * from node limit 3");
