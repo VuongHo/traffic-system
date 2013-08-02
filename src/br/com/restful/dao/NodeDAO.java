@@ -37,7 +37,7 @@ public class NodeDAO extends ConnectionFactory{
 		} catch (Exception e){
 			System.out.println("An Error occurred: " + e);
 		} finally {
-			fecharConexao(connect, pstmt, rs);
+			disConnect(connect, pstmt, rs);
 		}
 		return nodes;
 		
