@@ -29,7 +29,7 @@ public class ConnectionFactory {
 	}
 	
 	
-	public void fecharConexao(Connection connect, PreparedStatement pstmt, ResultSet rs){
+	public void disConnect(Connection connect, PreparedStatement pstmt, ResultSet rs){
 		
 		try {
 			
