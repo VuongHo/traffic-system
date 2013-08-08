@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import br.com.restful.factory.ConnectionFactory;
+import br.com.restful.model.Node;
 import br.com.restful.model.Resources;
 import br.com.restful.model.Segments;
 
@@ -62,7 +63,7 @@ public class SegmentHelperDAO extends ConnectionFactory{
 			if (builder == "") builder += "?";
 			else builder += ",?";
 		}
-		System.out.println("test " + builder);
+		
 		try{
 			pstmt = connect.prepareStatement("SELECT DISTINCT street_id FROM segmentcell JOIN segment ON segmentcell.segment_id = segment.segment_id WHERE cell_id IN ("+builder+")");
 			int j = 1;
@@ -109,33 +110,50 @@ public class SegmentHelperDAO extends ConnectionFactory{
 		return segmentIds;
 	}
 	public ArrayList<Resources> find_segment_speed(List<Integer> streetIds, List<Integer> segmentIds){
+		ArrayList<Resources> resources = new ArrayList<Resources>();
 		String builder = "";
 		for (int i = 0; i < segmentIds.size(); i++) {
 			if (builder == "") builder += "?";
 			else builder += ",?";
 		}
+		
 		Iterator<Integer> st_ids = streetIds.iterator();
 		while(st_ids.hasNext()){
 			try {
-				pstmt = connect.prepareStatement("SELECT segment.node_id_start, segment.node_id_end, segmentdetails.speed FROM segmentdetails JOIN segment ON segment.segment_id = segmentdetails.segment_id WHERE segment.street_id = ? AND segment.segment_id IN ("+builder+") GROUP BY segment.node_id_start");
-				pstmt.setInt(1, st_ids.next());
+				int st_id = st_ids.next();
+				pstmt = connect.prepareStatement("SELECT segment.node_id_start AS s_id, node_s.node_lat AS s_lat, node_s.node_lon AS s_lon, segment.node_id_end AS e_id, node_e.node_lat AS e_lat, node_e.node_lon AS e_lon, segds.speed"
+								+ " FROM segmentdetails AS segds"
+								+ " JOIN segment ON segment.segment_id = segds.segment_id"
+								+ " JOIN node AS node_s ON node_s.node_id = segment.node_id_start"
+								+ " JOIN node AS node_e ON node_e.node_id = segment.node_id_end" 
+								+ " WHERE segment.street_id = ? AND segment.segment_id IN ( " + builder + " )"
+								+ " GROUP BY segment.segment_id");
+				pstmt.setInt(1, st_id);
 				int j = 2;
 				Iterator<Integer> itr= segmentIds.iterator();
 				while(itr.hasNext()){
 					pstmt.setInt(j, itr.next());
 					j++;
 				}
-				rs = pstmt.executeQuery(); 
+				rs = pstmt.executeQuery();
+				ArrayList<Segments> segments = new ArrayList<Segments>();
 				while(rs.next()){
-					double node_start_id = rs.getDouble("node_id_start");
-					double node_end_id = rs.getDouble("node_id_end");
+					segments.add(new Segments(new Node(rs.getInt("s_id"), rs.getDouble("s_lat"), rs.getDouble("s_lon")), new Node(rs.getInt("e_id"), rs.getDouble("e_lat"), rs.getDouble("e_lon")), rs.getFloat("speed")));
 				}
+				resources.add(new Resources(st_id, segments));
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
-			
+			}		
 		}
-		return null;
+		return resources;
+	}
+	public ArrayList<Resources> get_all_segment_for_each_cells(List<Integer> cellIds){
+		ArrayList<Resources> resources = new ArrayList<Resources>();
+		List<Integer> streetIds = this.find_street_id(cellIds);
+		List<Integer> segmentIds = this.find_segment_id(cellIds);
+		resources = find_segment_speed(streetIds, segmentIds);
+		disConnect(connect, pstmt, rs);
+		return resources;
 	}
 }

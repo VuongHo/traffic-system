@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import br.com.restful.factory.ConnectionFactory;
@@ -24,38 +23,23 @@ public class ResourceDAO extends ConnectionFactory {
 		Connection connect = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		ArrayList<Resources> resources = null;
+		ArrayList<Resources> resources =  new ArrayList<Resources>();
 		connect = createConnection();
-		resources = new ArrayList<Resources>();
 		SegmentHelperDAO seg = new SegmentHelperDAO();
 		try{
 			int[] coordinates = new int[4];
 			double[] cells = seg.getCellRoot();
 			List<Integer> cellIds = null;
-			List<Integer> streetIds = null;
-			List<Integer> segmentIds = null;
 			coordinates[0] = (int) Math.abs((longitude - radius - cells[1])/CELL_D_X); //min_x
 			coordinates[1] = (int) Math.abs((longitude + radius - cells[1])/CELL_D_X); //max_x  
 			coordinates[2] = (int) Math.abs((latitude - radius - cells[0])/CELL_D_Y);  //min_y
 			coordinates[3] = (int) Math.abs((latitude + radius - cells[0])/CELL_D_Y);  //max_y
 	        
 			cellIds = seg.getCellIds(coordinates);
-			streetIds = seg.find_street_id(cellIds);
-			segmentIds = seg.find_segment_id(cellIds);
-			
-			
-			Iterator<Integer> itr= segmentIds.iterator();
-			String vd = "";
-			while(itr.hasNext()){
-				if (vd == "") vd += itr.next();
-				else vd += "," + itr.next();
-				
-				
-			}
-			System.out.println("cellids " + vd);
-			System.out.println("dde" + cells[1]);
+
+			resources = seg.get_all_segment_for_each_cells(cellIds);
 		}catch (Exception e){
-			System.out.println("An Error occurred: " + e);
+			System.out.println("An Error occurred: ." + e);
 		}finally{
 			disConnect(connect, pstmt, rs);
 		}

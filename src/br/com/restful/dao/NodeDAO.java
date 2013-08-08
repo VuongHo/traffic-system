@@ -29,9 +29,7 @@ public class NodeDAO extends ConnectionFactory{
 			rs = pstmt.executeQuery();
 			
 			while(rs.next()){
-				Node node = new Node();
-				node.setLatitude(rs.getFloat("node_lat"));
-				node.setLongitude(rs.getFloat("node_lon"));
+				Node node = new Node(123,rs.getFloat("node_lat"), rs.getFloat("node_lon"));
 				nodes.add(node);
 			}
 		} catch (Exception e){
